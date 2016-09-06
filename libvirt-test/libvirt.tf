@@ -4,7 +4,7 @@ provider "libvirt" {
 
 resource "libvirt_volume" "centos-image" {
   name = "centos-image"
-  source = "/home/dmartin/libvirt-storage-pool-openshift-ansible/CentOS-7-x86_64-GenericCloud.qcow2"
+  source = "/var/lib/libvirt/images/CentOS-7-x86_64-GenericCloud.qcow2"
   pool = "ose"
 }
 
@@ -60,7 +60,7 @@ resource "libvirt_domain" "centos-node-domain" {
   memory = 3072
   network_interface {
     network_id = "${libvirt_network.osenet.id}"
-    hostname ="node${count.index}.osc.test"
+    hostname ="node-${count.index + 1}.osc.test"
     mac = "52:54:00:00:00:a${count.index + 1}"
     addresses = ["192.168.100.10${count.index + 1}"]
   }
@@ -90,7 +90,7 @@ resource "libvirt_domain" "centos-gw-domain" {
   memory = 1024
   network_interface {
     network_id = "${libvirt_network.osenet.id}"
-    hostname ="master.osc.test"
+    hostname ="gw.osc.test"
     mac = "52:54:00:00:00:aa"
     addresses = ["192.168.100.99"]
   }
