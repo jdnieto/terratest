@@ -20,6 +20,12 @@ resource "libvirt_cloudinit" "masterinit" {
     local_hostname = "master.osc.test "
   pool = "ose"
 }
+resource "libvirt_cloudinit" "gwinit" {
+    name = "gateway-init.iso"
+    ssh_authorized_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQChWJDwn44S7te6z8c+40LHeeUur+teItBKvNHli0OYLw7CKs1QFlSfUja9ciKHQG6PhpRvEtY/Vtt8Hbfu0SoCU9nyd2pANrtIfjfbQ8X7Q4AADHxfvwlPDeog2Utg125YtY1adoSXa1OiOyqO7jiZLT2h5KXMj1W0hsbDOCrwUnjOw0apIif9Tb0G/9dMktYz0z9+cnPLqjP+X5SqUQF47GPfUAeUw3lXS8gfImgH5qifiElUXz3FEi6goiOCo6CRZ7evCmup3mHsaBHo91DG+E8U7nP6OqaG3oPEF02kGt2KVHQ5mhpSQ1lPr84QiYlQwAgYAG12TYQmrR7kZp7x OpenShift-Key"
+    local_hostname = "gw.osc.test "
+  pool = "ose"
+}
 
 resource "libvirt_cloudinit" "nodeinit" {
     name = "node-${count.index + 1}-init.iso"
@@ -35,15 +41,21 @@ resource "libvirt_volume" "centos-master" {
   pool = "ose"
 }
 
+resource "libvirt_volume" "centos-gw" {
+  name = "centos-OSE-gw"
+  base_volume_id = "${libvirt_volume.centos-image.id}"
+  pool = "ose"
+}
+
 resource "libvirt_volume" "centos-node" {
-  name = "centos-OSE-node-${count.index}"
+  name = "centos-OSE-node-${count.index + 1}"
   base_volume_id = "${libvirt_volume.centos-image.id}"
   pool = "ose"
   count = 2
 }
 
 resource "libvirt_domain" "centos-node-domain" {
-  name = "centos-OSE-node-${count.index}"
+  name = "centos-OSE-node-${count.index + 1}"
   cloudinit = "${element(libvirt_cloudinit.nodeinit.*.id, count.index + 1)}"
   memory = 3072
   network_interface {
@@ -70,5 +82,19 @@ resource "libvirt_domain" "centos-master-domain" {
   }
   disk {
        volume_id = "${libvirt_volume.centos-master.id}"
+  }
+}
+resource "libvirt_domain" "centos-gw-domain" {
+  name = "centos-OSE-gw"
+  cloudinit = "${libvirt_cloudinit.gwinit.id}"
+  memory = 1024
+  network_interface {
+    network_id = "${libvirt_network.osenet.id}"
+    hostname ="master.osc.test"
+    mac = "52:54:00:00:00:aa"
+    addresses = ["192.168.100.99"]
+  }
+  disk {
+       volume_id = "${libvirt_volume.centos-gw.id}"
   }
 }
