@@ -56,7 +56,7 @@ resource "libvirt_volume" "centos-node" {
 
 resource "libvirt_domain" "centos-node-domain" {
   name = "centos-OSE-node-${count.index + 1}"
-  cloudinit = "${element(libvirt_cloudinit.nodeinit.*.id, count.index + 1)}"
+  cloudinit = "${element(libvirt_cloudinit.nodeinit.*.id, count.index)}"
   memory = 3072
   network_interface {
     network_id = "${libvirt_network.osenet.id}"
@@ -65,7 +65,7 @@ resource "libvirt_domain" "centos-node-domain" {
     addresses = ["192.168.100.10${count.index + 1}"]
   }
   disk {
-       volume_id = "${element(libvirt_volume.centos-node.*.id, count.index + 1)}"
+       volume_id = "${element(libvirt_volume.centos-node.*.id, count.index)}"
   }
   count = 2
 }
@@ -74,6 +74,7 @@ resource "libvirt_domain" "centos-master-domain" {
   name = "centos-OSE-master"
   cloudinit = "${libvirt_cloudinit.masterinit.id}"
   memory = 3072
+  vcpu = 2
   network_interface {
     network_id = "${libvirt_network.osenet.id}"
     hostname ="master.osc.test"
