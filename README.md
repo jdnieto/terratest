@@ -8,4 +8,5 @@ Libvirt is not supported in Terraform at the moment, but I forked [terraform-pro
 
 
 ### Changelog
+* v0.2  - Added variables and variable files to customize deployment.
 * v0.1  - Initial work. Almost everything is hardcoded.
