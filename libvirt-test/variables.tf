@@ -17,3 +17,11 @@ variable "publicKey" {
 variable "nodeCount"  {
     default = "2"
 }
+
+variable "baseNet" {
+    default = "192.168.150."
+}
+
+variable "fullNet" {
+    default = "192.168.150.0/24"
+}

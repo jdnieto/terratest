@@ -3,27 +3,21 @@ provider "libvirt" {
 }
 
 resource "libvirt_volume" "terraform-base-image" {
-  name = "${var.stack}-base-image"
+  name = "ansible-base-image"
   source = "/var/lib/libvirt/images/${var.image}"
   pool = "${var.vmPool}"
 }
 
-resource "libvirt_network" "terraformnet" {
-  name = "${var.stack}net"
+resource "libvirt_network" "ansiblenet" {
+  name = "ansiblenet"
   mode = "nat"
   domain = "${var.stack}.com"
-  addresses = ["192.168.100.0/24"]
+  addresses = ["${var.fullNet}"]
 }
-resource "libvirt_cloudinit" "masterinit" {
-    name = "master-${var.stack}-init.iso"
+resource "libvirt_cloudinit" "managerinit" {
+    name = "manager-${var.stack}-init.iso"
     ssh_authorized_key = "${var.publicKey}"
-    local_hostname = "master.${var.stack}.com "
-  pool = "${var.vmPool}"
-}
-resource "libvirt_cloudinit" "gwinit" {
-    name = "gateway-${var.stack}-init.iso"
-    ssh_authorized_key = "${var.publicKey}"
-    local_hostname = "gw.${var.stack}.com "
+    local_hostname = "manager.${var.stack}.com "
   pool = "${var.vmPool}"
 }
 
@@ -35,34 +29,28 @@ resource "libvirt_cloudinit" "nodeinit" {
     count = "${var.nodeCount}"
 }
 
-resource "libvirt_volume" "terraform-master" {
-  name = "${var.stack}-master"
-  base_volume_id = "${libvirt_volume.terraform-base-image.id}"
-  pool = "${var.vmPool}"
-}
-
-resource "libvirt_volume" "terraform-gw" {
-  name = "${var.stack}-gw"
+resource "libvirt_volume" "terraform-manager" {
+  name = "ansible-manager"
   base_volume_id = "${libvirt_volume.terraform-base-image.id}"
   pool = "${var.vmPool}"
 }
 
 resource "libvirt_volume" "terraform-node" {
-  name = "${var.stack}-node-${count.index + 1}"
+  name = "ansible-node-${count.index + 1}"
   base_volume_id = "${libvirt_volume.terraform-base-image.id}"
   pool = "${var.vmPool}"
   count = "${var.nodeCount}"
 }
 
 resource "libvirt_domain" "terraform-node-domain" {
-  name = "${var.stack}-node-${count.index + 1}"
+  name = "ansible-node-${count.index + 1}"
   cloudinit = "${element(libvirt_cloudinit.nodeinit.*.id, count.index)}"
   memory = 1024
   network_interface {
-    network_id = "${libvirt_network.terraformnet.id}"
+    network_id = "${libvirt_network.ansiblenet.id}"
     hostname ="node-${count.index + 1}.${var.stack}.com"
-    mac = "52:54:00:00:00:a${count.index + 1}"
-    addresses = ["192.168.100.10${count.index + 1}"]
+    mac = "52:54:00:00:01:a${count.index + 1}"
+    addresses = ["${var.baseNet}${count.index + 110}"]
   }
   disk {
        volume_id = "${element(libvirt_volume.terraform-node.*.id, count.index)}"
@@ -70,32 +58,18 @@ resource "libvirt_domain" "terraform-node-domain" {
   count = "${var.nodeCount}"
 }
 
-resource "libvirt_domain" "terraform-master-domain" {
-  name = "${var.stack}-master"
-  cloudinit = "${libvirt_cloudinit.masterinit.id}"
+resource "libvirt_domain" "terraform-manager-domain" {
+  name = "ansible-master"
+  cloudinit = "${libvirt_cloudinit.managerinit.id}"
   memory = 1024
   vcpu = 1
   network_interface {
-    network_id = "${libvirt_network.terraformnet.id}"
-    hostname ="master.${var.stack}.com"
-    mac = "52:54:00:00:00:a0"
-    addresses = ["192.168.100.100"]
+    network_id = "${libvirt_network.ansiblenet.id}"
+    hostname ="manager.${var.stack}.com"
+    mac = "52:54:00:00:01:a0"
+    addresses = ["${var.baseNet}100"]
   }
   disk {
-       volume_id = "${libvirt_volume.terraform-master.id}"
-  }
-}
-resource "libvirt_domain" "terraform-gw-domain" {
-  name = "${var.stack}-gw"
-  cloudinit = "${libvirt_cloudinit.gwinit.id}"
-  memory = 1024
-  network_interface {
-    network_id = "${libvirt_network.terraformnet.id}"
-    hostname ="gw.${var.stack}.com"
-    mac = "52:54:00:00:00:aa"
-    addresses = ["192.168.100.99"]
-  }
-  disk {
-       volume_id = "${libvirt_volume.terraform-gw.id}"
+       volume_id = "${libvirt_volume.terraform-manager.id}"
   }
 }

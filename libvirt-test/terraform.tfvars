@@ -7,3 +7,7 @@
 "publicKey" = ""
 
 "nodeCount" = "2"
+
+"baseNet" = "192.168.150."
+
+"fullNet" = "192.168.150.0/24"
