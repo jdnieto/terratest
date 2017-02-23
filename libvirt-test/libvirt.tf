@@ -12,7 +12,7 @@ resource "libvirt_network" "terraformnet" {
   name = "${var.stack}net"
   mode = "nat"
   domain = "${var.stack}.com"
-  addresses = ["192.168.100.0/24"]
+  addresses = ["192.168.200.0/24"]
 }
 resource "libvirt_cloudinit" "masterinit" {
     name = "master-${var.stack}-init.iso"
@@ -62,7 +62,7 @@ resource "libvirt_domain" "terraform-node-domain" {
     network_id = "${libvirt_network.terraformnet.id}"
     hostname ="node-${count.index + 1}.${var.stack}.com"
     mac = "52:54:00:00:00:a${count.index + 1}"
-    addresses = ["192.168.100.10${count.index + 1}"]
+    addresses = ["192.168.200.10${count.index + 1}"]
   }
   disk {
        volume_id = "${element(libvirt_volume.terraform-node.*.id, count.index)}"
@@ -79,7 +79,7 @@ resource "libvirt_domain" "terraform-master-domain" {
     network_id = "${libvirt_network.terraformnet.id}"
     hostname ="master.${var.stack}.com"
     mac = "52:54:00:00:00:a0"
-    addresses = ["192.168.100.100"]
+    addresses = ["192.168.200.100"]
   }
   disk {
        volume_id = "${libvirt_volume.terraform-master.id}"
@@ -93,7 +93,7 @@ resource "libvirt_domain" "terraform-gw-domain" {
     network_id = "${libvirt_network.terraformnet.id}"
     hostname ="gw.${var.stack}.com"
     mac = "52:54:00:00:00:aa"
-    addresses = ["192.168.100.99"]
+    addresses = ["192.168.200.99"]
   }
   disk {
        volume_id = "${libvirt_volume.terraform-gw.id}"
